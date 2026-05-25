@@ -1,0 +1,264 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f7f8fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  grid-template-rows: minmax(420px, auto) minmax(300px, auto);
+  gap: 20px;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.request-panel,
+.workflow-panel,
+.final-panel {
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(31, 42, 68, 0.08);
+}
+
+.request-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.brand-row,
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #235789;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+p {
+  color: #5b667a;
+  line-height: 1.5;
+}
+
+label {
+  color: #39445a;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #cbd3e1;
+  border-radius: 8px;
+  padding: 14px;
+  color: #172033;
+  background: #fbfcff;
+  line-height: 1.5;
+}
+
+textarea:focus {
+  outline: 3px solid rgba(35, 87, 137, 0.18);
+  border-color: #235789;
+}
+
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #235789;
+  font-size: 0.96rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.workflow-panel {
+  overflow: hidden;
+  padding: 24px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+  max-height: calc(100vh - 130px);
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.role-dot {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.role-gemini {
+  background: #0e7c7b;
+}
+
+.role-openai {
+  background: #3454d1;
+}
+
+.role-claude {
+  background: #a23e48;
+}
+
+.message-card {
+  border: 1px solid #e0e5ef;
+  border-radius: 8px;
+  background: #fbfcff;
+  overflow: hidden;
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e0e5ef;
+  padding: 10px 12px;
+  color: #39445a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+pre {
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #263249;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.message-card pre {
+  padding: 14px;
+}
+
+.final-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  padding: 24px;
+}
+
+.final-panel pre {
+  max-height: 360px;
+  border: 1px solid #e0e5ef;
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 16px;
+}
+
+.empty-state,
+.error-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfcff;
+}
+
+.error-box {
+  border-color: #f0b8bd;
+  color: #8f2733;
+  background: #fff7f8;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    padding: 14px;
+  }
+
+  .timeline {
+    max-height: none;
+  }
+
+  .final-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
