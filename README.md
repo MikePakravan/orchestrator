@@ -21,41 +21,22 @@ Mocked providers are enabled by default with `USE_MOCK_AGENTS=true`, so local de
 - `backend/`: FastAPI API, provider connectors, orchestration logic, JSON task history, and backend tests.
 - `frontend/`: React/Vite UI for submitting tasks and viewing workflow traces.
 - `infra/`: Dev-only Azure Bicep infrastructure.
+- `scripts/`: Root-level PowerShell commands for local run, checks, and dev deployment.
 - `.github/workflows/ci.yml`: CI for backend lint/tests and frontend lint/build.
 - `.env.example`: Placeholder local settings only.
 
-## Run The Backend Locally
+## Run Locally
 
-Run from `backend/`:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-Copy-Item ..\.env.example .env
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-Check the API:
+Run from the repository root:
 
 ```powershell
-curl http://127.0.0.1:8000/api/health
-curl -Method POST http://127.0.0.1:8000/api/tasks/start -ContentType "application/json" -Body '{"request":"Build a dev MVP"}'
-curl http://127.0.0.1:8000/api/tasks/<task-id>
+.\scripts\run-local.ps1
 ```
 
-Task history is stored at `TASK_HISTORY_PATH`, which defaults to `./data/tasks.json` under `backend/` when running locally.
+The script installs missing backend and frontend dependencies, starts both services, enables mocked providers, and prints the URLs. It uses Python 3.12 or newer; if your default `python` is older, set `PYTHON_EXE` to a Python 3.12+ executable before running the script.
 
-## Run The Frontend Locally
-
-Run from `frontend/`:
-
-```powershell
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`. Vite proxies `/api` calls to `http://127.0.0.1:8000`.
+- Backend: `http://127.0.0.1:8000`
+- Frontend: `http://127.0.0.1:5173` or the next available local port
 
 ## Provider Configuration
 
@@ -77,19 +58,13 @@ Placeholder values such as `placeholder-openai-api-key` are treated as not confi
 
 ## Test And Build
 
-Run backend checks from `backend/`:
+Run all checks from the repository root:
 
 ```powershell
-ruff check .
-pytest
+.\scripts\test-all.ps1
 ```
 
-Run frontend checks from `frontend/`:
-
-```powershell
-npm run lint
-npm run build
-```
+The script runs backend lint, backend tests, frontend lint, frontend build, and prints a PASS/FAIL summary.
 
 ## Azure Dev Infrastructure
 
@@ -102,14 +77,17 @@ The first IaC version is in `infra/main.bicep`. It is restricted to dev deployme
 - Application Insights
 - Log Analytics workspace
 
-Create or update dev infrastructure from `infra/`:
+Set the required Azure values, then deploy from the repository root:
 
 ```powershell
-az group create --name <dev-resource-group-name> --location australiaeast
-az deployment group create --resource-group <dev-resource-group-name> --template-file main.bicep --parameters environmentName=dev resourcePrefix=<dev-prefix>
+$env:AZURE_TENANT_ID="<tenant-id>"
+$env:AZURE_SUBSCRIPTION_ID="<subscription-id>"
+$env:AZURE_REGION="australiaeast"
+$env:AZURE_RESOURCE_GROUP="<dev-resource-group-name>"
+.\scripts\deploy-dev.ps1
 ```
 
-This repository does not include production deployment, tenant-specific parameters, subscription-specific parameters, delete-resource scripts, or delete-resource workflows.
+The deploy script asks for confirmation before applying changes. It creates or updates dev resources only, does not support production, does not hardcode tenant or subscription values, and does not delete resources.
 
 ## Security Notes
 

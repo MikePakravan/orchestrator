@@ -10,6 +10,7 @@ __pycache__/
 venv/
 node_modules/
 .vite/
+**/.vite/
 dist/
 build/
 coverage/
