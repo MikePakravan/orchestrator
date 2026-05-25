@@ -2,16 +2,18 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
-from app.agents.base import AgentConnector
+from app.agents.base import AgentConnector, has_configured_secret
 from app.config import Settings
 
 
 class OpenAIArchitectBuilderAgent(AgentConnector):
+    name = "openai_architect_builder"
+
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
-        if self.settings.use_mock_agents or not self.settings.openai_api_key:
+        if self.settings.use_mock_agents or not has_configured_secret(self.settings.openai_api_key):
             return self._mock(payload)
 
         client = AsyncOpenAI(api_key=self.settings.openai_api_key)
@@ -51,4 +53,3 @@ class OpenAIArchitectBuilderAgent(AgentConnector):
                 "Keep deployment out of CI for the dev MVP.",
             ],
         }
-

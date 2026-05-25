@@ -2,16 +2,18 @@ from typing import Any
 
 from anthropic import AsyncAnthropic
 
-from app.agents.base import AgentConnector
+from app.agents.base import AgentConnector, has_configured_secret
 from app.config import Settings
 
 
 class ClaudeReviewerAgent(AgentConnector):
+    name = "claude_reviewer"
+
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
-        if self.settings.use_mock_agents or not self.settings.anthropic_api_key:
+        if self.settings.use_mock_agents or not has_configured_secret(self.settings.anthropic_api_key):
             return self._mock(payload)
 
         client = AsyncAnthropic(api_key=self.settings.anthropic_api_key)
@@ -48,4 +50,3 @@ class ClaudeReviewerAgent(AgentConnector):
             ],
             "reviewed_payload_keys": sorted(payload.keys()),
         }
-

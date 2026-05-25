@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, GitBranch, Loader2, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, CircleAlert, GitBranch, Loader2, Send, Sparkles, XCircle } from "lucide-react";
 
 type TaskStatus = "completed" | "failed";
 
@@ -30,6 +30,11 @@ const roleTone: Record<AgentMessage["role"], string> = {
   claude_reviewer: "role-claude"
 };
 
+const statusLabels: Record<TaskStatus, string> = {
+  completed: "Completed",
+  failed: "Failed"
+};
+
 export function App() {
   const [request, setRequest] = useState("Create a secure dev-only Azure MVP for this orchestrator.");
   const [task, setTask] = useState<TaskRecord | null>(null);
@@ -55,14 +60,16 @@ export function App() {
       });
 
       if (!startResponse.ok) {
-        throw new Error("Unable to start task");
+        const detail = await startResponse.text();
+        throw new Error(detail || "Unable to start task");
       }
 
       const started = (await startResponse.json()) as { task_id: string };
       const taskResponse = await fetch(`/api/tasks/${started.task_id}`);
 
       if (!taskResponse.ok) {
-        throw new Error("Unable to load task history");
+        const detail = await taskResponse.text();
+        throw new Error(detail || "Unable to load task history");
       }
 
       setTask((await taskResponse.json()) as TaskRecord);
@@ -118,7 +125,19 @@ export function App() {
       <section className="workflow-panel" aria-live="polite">
         <div className="panel-heading">
           <Sparkles size={22} aria-hidden="true" />
-          <h2>Workflow trace</h2>
+          <div>
+            <h2>Workflow trace</h2>
+            {task ? (
+              <span className={`status-pill status-${task.status}`}>
+                {task.status === "completed" ? (
+                  <CheckCircle2 size={14} aria-hidden="true" />
+                ) : (
+                  <XCircle size={14} aria-hidden="true" />
+                )}
+                {statusLabels[task.status]}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="timeline">
@@ -152,4 +171,3 @@ export function App() {
     </main>
   );
 }
-

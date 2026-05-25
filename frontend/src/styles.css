@@ -54,6 +54,13 @@ textarea {
   gap: 14px;
 }
 
+.panel-heading > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .brand-mark {
   display: grid;
   place-items: center;
@@ -188,6 +195,30 @@ textarea:focus {
   text-transform: capitalize;
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  border: 1px solid #cbd3e1;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.status-completed {
+  border-color: #a9d8cf;
+  color: #0d6f63;
+  background: #f0fbf8;
+}
+
+.status-failed {
+  border-color: #f0b8bd;
+  color: #8f2733;
+  background: #fff7f8;
+}
+
 pre {
   margin: 0;
   overflow: auto;
@@ -261,4 +292,3 @@ pre {
     grid-template-columns: 1fr;
   }
 }
-

@@ -5,6 +5,9 @@
 param environmentName string = 'dev'
 
 @description('Azure region for all resources.')
+@allowed([
+  'australiaeast'
+])
 param location string = 'australiaeast'
 
 @description('Lowercase resource prefix, for example orchestrator-dev. Do not include subscription or tenant identifiers.')
@@ -128,4 +131,3 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
 output appServiceName string = appService.name
 output keyVaultName string = keyVault.name
 output storageAccountName string = storage.name
-
