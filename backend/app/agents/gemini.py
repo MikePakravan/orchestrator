@@ -2,16 +2,18 @@ from typing import Any
 
 import httpx
 
-from app.agents.base import AgentConnector
+from app.agents.base import AgentConnector, has_configured_secret
 from app.config import Settings
 
 
 class GeminiBossAgent(AgentConnector):
+    name = "gemini_boss"
+
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
-        if self.settings.use_mock_agents or not self.settings.gemini_api_key:
+        if self.settings.use_mock_agents or not has_configured_secret(self.settings.gemini_api_key):
             return self._mock(payload)
 
         prompt = (
@@ -64,4 +66,3 @@ class GeminiBossAgent(AgentConnector):
             ],
             "source_request": request,
         }
-

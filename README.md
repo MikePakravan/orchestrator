@@ -1,75 +1,99 @@
 # Multi-Agent Orchestrator
 
-First dev MVP for a multi-agent orchestration app hosted on Azure App Service.
+Dev MVP for a multi-agent orchestration app that can run locally with mocked providers and later be deployed to Azure App Service.
 
 ## What It Does
 
-The app runs a structured workflow:
+The app runs a fixed orchestration workflow:
 
-1. User submits a request in the React UI.
+1. The React UI submits a user request.
 2. FastAPI sends it to the Gemini Boss Agent for goals, requirements, and acceptance criteria.
-3. FastAPI sends Gemini's output to the OpenAI Architect/Builder Agent.
+3. FastAPI sends Gemini's output to the OpenAI Architect/Builder Agent for an initial solution.
 4. FastAPI sends Gemini and OpenAI outputs to the Claude Reviewer Agent.
-5. FastAPI sends Claude feedback to Gemini for approval decisions.
-6. FastAPI sends only Gemini-approved fixes back to OpenAI.
-7. The UI displays every workflow step and the final output.
+5. FastAPI sends Claude feedback to Gemini for approve/reject decisions.
+6. FastAPI sends only Gemini-approved or Gemini-modified fixes back to OpenAI.
+7. The UI displays task status, every agent step, and the final output.
 
-Provider connectors use real provider HTTP APIs only when local or hosted environment variables are configured. In dev, `USE_MOCK_AGENTS=true` returns deterministic responses without secrets.
+Mocked providers are enabled by default with `USE_MOCK_AGENTS=true`, so local development and unit tests do not need real API keys.
 
 ## Repository Layout
 
-- `backend/`: Python FastAPI API and agent orchestration.
-- `frontend/`: React/Vite UI.
-- `infra/`: Azure Bicep infrastructure for dev.
-- `.github/workflows/ci.yml`: build/test workflow only.
+- `backend/`: FastAPI API, provider connectors, orchestration logic, JSON task history, and backend tests.
+- `frontend/`: React/Vite UI for submitting tasks and viewing workflow traces.
+- `infra/`: Dev-only Azure Bicep infrastructure.
+- `.github/workflows/ci.yml`: CI for backend lint/tests and frontend lint/build.
+- `.env.example`: Placeholder local settings only.
 
-## Run The Backend
+## Run The Backend Locally
 
-Run these commands from `backend/`:
+Run from `backend/`:
 
-```bash
+```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-copy ..\.env.example .env
+Copy-Item ..\.env.example .env
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Health check:
+Check the API:
 
-```bash
+```powershell
 curl http://127.0.0.1:8000/api/health
+curl -Method POST http://127.0.0.1:8000/api/tasks/start -ContentType "application/json" -Body '{"request":"Build a dev MVP"}'
+curl http://127.0.0.1:8000/api/tasks/<task-id>
 ```
 
-## Run The Frontend
+Task history is stored at `TASK_HISTORY_PATH`, which defaults to `./data/tasks.json` under `backend/` when running locally.
 
-Run these commands from `frontend/`:
+## Run The Frontend Locally
 
-```bash
+Run from `frontend/`:
+
+```powershell
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:5173`. Vite proxies `/api` calls to `http://127.0.0.1:8000`.
+
+## Provider Configuration
+
+Local mocks are the default:
+
+```env
+USE_MOCK_AGENTS=true
+```
+
+To enable real providers later, set `USE_MOCK_AGENTS=false` and provide real values through local environment variables, a local uncommitted `.env`, Azure App Service settings, or Key Vault-backed configuration:
+
+```env
+GEMINI_API_KEY=<real local value>
+OPENAI_API_KEY=<real local value>
+ANTHROPIC_API_KEY=<real local value>
+```
+
+Placeholder values such as `placeholder-openai-api-key` are treated as not configured. Unit tests must continue to run without real provider credentials.
 
 ## Test And Build
 
 Run backend checks from `backend/`:
 
-```bash
+```powershell
+ruff check .
 pytest
 ```
 
 Run frontend checks from `frontend/`:
 
-```bash
+```powershell
 npm run lint
 npm run build
 ```
 
 ## Azure Dev Infrastructure
 
-The first IaC version is in `infra/main.bicep`. It creates dev-only resources in `australiaeast`:
+The first IaC version is in `infra/main.bicep`. It is restricted to dev deployment in `australiaeast` and creates:
 
 - Linux App Service Plan
 - Azure App Service
@@ -78,19 +102,19 @@ The first IaC version is in `infra/main.bicep`. It creates dev-only resources in
 - Application Insights
 - Log Analytics workspace
 
-Create a resource group and deploy from `infra/`:
+Create or update dev infrastructure from `infra/`:
 
-```bash
+```powershell
 az group create --name <dev-resource-group-name> --location australiaeast
 az deployment group create --resource-group <dev-resource-group-name> --template-file main.bicep --parameters environmentName=dev resourcePrefix=<dev-prefix>
 ```
 
-Do not use this MVP for production deployment. No workflow in this repository deploys or deletes Azure resources.
+This repository does not include production deployment, tenant-specific parameters, subscription-specific parameters, delete-resource scripts, or delete-resource workflows.
 
 ## Security Notes
 
 - Do not commit `.env` files.
-- Do not commit API keys, tenant IDs, subscription IDs, or generated secret values.
+- Do not commit API keys, tenant IDs, subscription IDs, Confluence tokens, client secrets, or generated secret values.
 - Keep provider keys in local environment variables, Azure App Service settings, or Key Vault.
-- Logs intentionally avoid request headers and provider credentials.
-
+- Do not log provider request headers, API keys, tokens, or secret-bearing payload fields.
+- `.env.example` must contain placeholders only.
