@@ -129,23 +129,11 @@ $env:APP_ENV = "test"
 $env:USE_MOCK_AGENTS = "true"
 
 Invoke-Check "Backend lint" {
-    Push-Location $backendDir
-    try {
-        & $backendPython -m ruff check .
-    }
-    finally {
-        Pop-Location
-    }
+    Invoke-Native -FilePath $backendPython -ArgumentList @("-m", "ruff", "check", ".") -WorkingDirectory $backendDir
 }
 
 Invoke-Check "Backend tests" {
-    Push-Location $backendDir
-    try {
-        & $backendPython -m pytest --basetemp .pytest_tmp -o cache_dir=.pytest_cache
-    }
-    finally {
-        Pop-Location
-    }
+    Invoke-Native -FilePath $backendPython -ArgumentList @("-m", "pytest", "--basetemp", ".pytest_tmp", "-o", "cache_dir=.pytest_cache") -WorkingDirectory $backendDir
 }
 
 Invoke-Check "Frontend lint" {

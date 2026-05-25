@@ -1,6 +1,6 @@
 # Multi-Agent Orchestrator
 
-Dev MVP for a multi-agent orchestration app that can run locally with mocked providers and later be deployed to Azure App Service.
+Dev MVP for a multi-agent orchestration app that can run locally with mocked providers and deploy to Azure App Service.
 
 ## What It Does
 
@@ -68,9 +68,11 @@ Run all checks from the repository root:
 
 The script runs backend lint, backend tests, frontend lint, frontend tests, frontend build, and prints a PASS/FAIL summary.
 
-## Azure Dev Infrastructure
+## Deploy to Azure Dev
 
-The first IaC version is in `infra/main.bicep`. It is restricted to dev deployment in `australiaeast` and creates:
+The dev deployment uses one public Azure App Service for the MVP. FastAPI serves `/api/*` and also serves the built React app from the same App Service host. This keeps the dev deployment simple and avoids separate frontend hosting or cross-origin browser calls.
+
+The IaC in `infra/main.bicep` is restricted to dev deployment in `australiaeast` and creates:
 
 - Linux App Service Plan
 - Azure App Service
@@ -79,17 +81,19 @@ The first IaC version is in `infra/main.bicep`. It is restricted to dev deployme
 - Application Insights
 - Log Analytics workspace
 
-Set the required Azure values, then deploy from the repository root:
+Set the required Azure tenant and subscription values, then deploy from the repository root. `AZURE_REGION` defaults to `australiaeast` and `AZURE_RESOURCE_GROUP` defaults to `rg-ai-orchestrator-dev` when omitted.
 
 ```powershell
 $env:AZURE_TENANT_ID="<tenant-id>"
 $env:AZURE_SUBSCRIPTION_ID="<subscription-id>"
-$env:AZURE_REGION="australiaeast"
-$env:AZURE_RESOURCE_GROUP="<dev-resource-group-name>"
 .\scripts\deploy-dev.ps1
 ```
 
-The deploy script asks for confirmation before applying changes. It creates or updates dev resources only, does not support production, does not hardcode tenant or subscription values, and does not delete resources.
+The deploy script asks for `DEPLOY DEV` confirmation before applying changes. It builds the frontend, packages it with the backend, deploys dev resources, zip-deploys the app, prints the App Service URL, and attempts `/api/health`. It sets mock provider mode (`PROVIDER_MODE=mock`, `USE_MOCK_AGENTS=true`) and does not require real API keys.
+
+After deployment, open the printed App Service URL and submit a mocked workflow request.
+
+The repository does not include production deployment or Azure resource deletion capability.
 
 ## Security Notes
 

@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.agents.claude import ClaudeReviewerAgent
 from app.agents.gemini import GeminiBossAgent
@@ -8,6 +12,9 @@ from app.config import Settings, get_settings
 from app.models import HealthResponse, TaskStartRequest, TaskStartResponse
 from app.orchestrator import MultiAgentOrchestrator
 from app.storage import TaskHistoryStore
+
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 def create_app() -> FastAPI:
@@ -20,6 +27,8 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+    if (STATIC_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
     return app
 
 
@@ -84,4 +93,16 @@ async def get_task(task_id: str, store: TaskHistoryStore = Depends(get_store)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_frontend(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+
+    index_path = STATIC_DIR / "index.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend build not found")
+
+    return FileResponse(index_path)
 

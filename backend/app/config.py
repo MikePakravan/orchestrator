@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_env: str = Field(default="dev", alias="APP_ENV")
+    environment: str = Field(default="dev", alias="ENVIRONMENT")
+    provider_mode: str = Field(default="mock", alias="PROVIDER_MODE")
     allowed_origins: str = Field(default=DEFAULT_ALLOWED_ORIGINS, alias="ALLOWED_ORIGINS")
     task_history_path: Path = Field(default=Path("./data/tasks.json"), alias="TASK_HISTORY_PATH")
     use_mock_agents: bool = Field(default=True, alias="USE_MOCK_AGENTS")
@@ -38,7 +40,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
 
     def missing_provider_keys(self) -> list[str]:
-        if self.use_mock_agents:
+        if self.provider_mode == "mock" or self.use_mock_agents:
             return []
 
         required_keys = {

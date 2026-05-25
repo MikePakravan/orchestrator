@@ -13,6 +13,9 @@ param location string = 'australiaeast'
 @description('Lowercase resource prefix, for example orchestrator-dev. Do not include subscription or tenant identifiers.')
 param resourcePrefix string
 
+@description('Startup command for the Python App Service container.')
+param startupCommand string = 'python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'
+
 var normalizedPrefix = toLower(resourcePrefix)
 var tags = {
   app: 'multi-agent-orchestrator'
@@ -102,13 +105,34 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'PYTHON|3.12'
       alwaysOn: false
+      appCommandLine: startupCommand
       appSettings: [
+        {
+          name: 'ENVIRONMENT'
+          value: environmentName
+        }
         {
           name: 'APP_ENV'
           value: environmentName
         }
         {
+          name: 'PROVIDER_MODE'
+          value: 'mock'
+        }
+        {
           name: 'USE_MOCK_AGENTS'
+          value: 'true'
+        }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: 'https://${normalizedPrefix}-app.azurewebsites.net'
+        }
+        {
+          name: 'TASK_HISTORY_PATH'
+          value: './data/tasks.json'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'true'
         }
         {
@@ -129,5 +153,6 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
 }
 
 output appServiceName string = appService.name
+output appServiceUrl string = 'https://${appService.properties.defaultHostName}'
 output keyVaultName string = keyVault.name
 output storageAccountName string = storage.name

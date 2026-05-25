@@ -16,6 +16,15 @@ def test_health() -> None:
     assert response.json()["service"] == "multi-agent-orchestrator"
 
 
+def test_unknown_api_route_returns_json_404() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/does-not-exist")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "API route not found"
+
+
 def test_task_workflow_persists_history(tmp_path: Path) -> None:
     settings = get_settings()
     original_path = settings.task_history_path
@@ -55,10 +64,12 @@ def test_task_start_returns_clear_error_when_real_provider_mode_lacks_keys(tmp_p
     settings = get_settings()
     original_path = settings.task_history_path
     original_mock_mode = settings.use_mock_agents
+    original_provider_mode = settings.provider_mode
     original_keys = (settings.gemini_api_key, settings.openai_api_key, settings.anthropic_api_key)
     try:
         settings.task_history_path = tmp_path / "tasks.json"
         settings.use_mock_agents = False
+        settings.provider_mode = "real"
         settings.gemini_api_key = None
         settings.openai_api_key = None
         settings.anthropic_api_key = None
@@ -74,5 +85,6 @@ def test_task_start_returns_clear_error_when_real_provider_mode_lacks_keys(tmp_p
     finally:
         settings.task_history_path = original_path
         settings.use_mock_agents = original_mock_mode
+        settings.provider_mode = original_provider_mode
         settings.gemini_api_key, settings.openai_api_key, settings.anthropic_api_key = original_keys
 
