@@ -152,6 +152,10 @@ Invoke-Check "Frontend lint" {
     Invoke-Native -FilePath $npmCommand -ArgumentList @("run", "lint") -WorkingDirectory $frontendDir
 }
 
+Invoke-Check "Frontend tests" {
+    Invoke-Native -FilePath $npmCommand -ArgumentList @("test") -WorkingDirectory $frontendDir
+}
+
 Invoke-Check "Frontend build" {
     Invoke-Native -FilePath $npmCommand -ArgumentList @("run", "build") -WorkingDirectory $frontendDir
 }

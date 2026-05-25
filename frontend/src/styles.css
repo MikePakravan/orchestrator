@@ -134,6 +134,47 @@ textarea:focus {
   opacity: 0.62;
 }
 
+.connection-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfcff;
+}
+
+.connection-box div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.connection-box strong {
+  color: #263249;
+  font-size: 0.86rem;
+}
+
+.connection-box span {
+  color: #5b667a;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.connection-connected {
+  border-color: #a9d8cf;
+  color: #0d6f63;
+  background: #f0fbf8;
+}
+
+.connection-not_connected {
+  border-color: #f0b8bd;
+  color: #8f2733;
+  background: #fff7f8;
+}
+
 .workflow-panel {
   overflow: hidden;
   padding: 24px;

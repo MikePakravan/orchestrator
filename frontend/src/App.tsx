@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, GitBranch, Loader2, Send, Sparkles, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, CircleAlert, GitBranch, Loader2, Send, Sparkles, Wifi, WifiOff, XCircle } from "lucide-react";
+
+import { apiUrl, formatApiError, readErrorDetails } from "./api";
 
 type TaskStatus = "completed" | "failed";
 
@@ -16,6 +18,11 @@ type TaskRecord = {
   user_request: string;
   history: AgentMessage[];
   final_output: Record<string, unknown> | null;
+};
+
+type HealthState = {
+  status: "checking" | "connected" | "not_connected";
+  details: string;
 };
 
 const roleLabels: Record<AgentMessage["role"], string> = {
@@ -39,9 +46,45 @@ export function App() {
   const [request, setRequest] = useState("Create a secure dev-only Azure MVP for this orchestrator.");
   const [task, setTask] = useState<TaskRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<HealthState>({ status: "checking", details: "Checking backend connection..." });
   const [loading, setLoading] = useState(false);
 
   const canSubmit = request.trim().length > 0 && !loading;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkHealth() {
+      try {
+        const response = await fetch(apiUrl("/api/health"));
+        if (!response.ok) {
+          const details = await readErrorDetails(response);
+          throw new Error(formatApiError("Health check", details));
+        }
+
+        const payload = (await response.json()) as { status: string; environment: string; service: string };
+        if (!cancelled) {
+          setHealth({
+            status: "connected",
+            details: `${payload.service} is ${payload.status} (${payload.environment})`
+          });
+        }
+      } catch (healthError) {
+        if (!cancelled) {
+          setHealth({
+            status: "not_connected",
+            details: healthError instanceof Error ? healthError.message : "Unable to reach backend"
+          });
+        }
+      }
+    }
+
+    void checkHealth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function startTask() {
     if (!canSubmit) {
@@ -53,23 +96,21 @@ export function App() {
     setTask(null);
 
     try {
-      const startResponse = await fetch("/api/tasks/start", {
+      const startResponse = await fetch(apiUrl("/api/tasks/start"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ request })
       });
 
       if (!startResponse.ok) {
-        const detail = await startResponse.text();
-        throw new Error(detail || "Unable to start task");
+        throw new Error(formatApiError("Start task", await readErrorDetails(startResponse)));
       }
 
       const started = (await startResponse.json()) as { task_id: string };
-      const taskResponse = await fetch(`/api/tasks/${started.task_id}`);
+      const taskResponse = await fetch(apiUrl(`/api/tasks/${started.task_id}`));
 
       if (!taskResponse.ok) {
-        const detail = await taskResponse.text();
-        throw new Error(detail || "Unable to load task history");
+        throw new Error(formatApiError("Load task history", await readErrorDetails(taskResponse)));
       }
 
       setTask((await taskResponse.json()) as TaskRecord);
@@ -97,6 +138,18 @@ export function App() {
           <div>
             <h1>Multi-Agent Orchestrator</h1>
             <p>Dev workflow for Gemini requirements, OpenAI architecture, Claude review, and approved fixes.</p>
+          </div>
+        </div>
+
+        <div className={`connection-box connection-${health.status}`}>
+          {health.status === "connected" ? (
+            <Wifi size={18} aria-hidden="true" />
+          ) : (
+            <WifiOff size={18} aria-hidden="true" />
+          )}
+          <div>
+            <strong>{health.status === "connected" ? "Connected" : health.status === "checking" ? "Checking" : "Not connected"}</strong>
+            <span>{health.details}</span>
           </div>
         </div>
 

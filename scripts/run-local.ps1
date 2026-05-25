@@ -143,6 +143,8 @@ Write-Host "Starting local services with mocked providers..."
 $env:APP_ENV = "dev"
 $env:USE_MOCK_AGENTS = "true"
 $env:TASK_HISTORY_PATH = ".\data\tasks.json"
+$env:ALLOWED_ORIGINS = "http://localhost:$frontendPort,http://127.0.0.1:$frontendPort"
+$env:VITE_API_BASE_URL = $backendUrl
 $backendProcess = Start-ManagedProcess -FilePath $backendPython -ArgumentList @("-m", "uvicorn", "app.main:app", "--reload", "--host", "127.0.0.1", "--port", "$backendPort") -WorkingDirectory $backendDir
 $frontendProcess = Start-ManagedProcess -FilePath $npmCommand -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", "$frontendPort", "--strictPort") -WorkingDirectory $frontendDir
 

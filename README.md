@@ -38,6 +38,8 @@ The script installs missing backend and frontend dependencies, starts both servi
 - Backend: `http://127.0.0.1:8000`
 - Frontend: `http://127.0.0.1:5173` or the next available local port
 
+The frontend reads `VITE_API_BASE_URL` when set. If it is not set, it safely falls back to same-origin `/api` requests for the local Vite proxy.
+
 ## Provider Configuration
 
 Local mocks are the default:
@@ -64,7 +66,7 @@ Run all checks from the repository root:
 .\scripts\test-all.ps1
 ```
 
-The script runs backend lint, backend tests, frontend lint, frontend build, and prints a PASS/FAIL summary.
+The script runs backend lint, backend tests, frontend lint, frontend tests, frontend build, and prints a PASS/FAIL summary.
 
 ## Azure Dev Infrastructure
 

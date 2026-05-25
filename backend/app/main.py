@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.claude import ClaudeReviewerAgent
@@ -46,11 +46,35 @@ async def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
 @app.post("/api/tasks/start", response_model=TaskStartResponse)
 async def start_task(
     request: TaskStartRequest,
+    settings: Settings = Depends(get_settings),
     orchestrator: MultiAgentOrchestrator = Depends(get_orchestrator),
     store: TaskHistoryStore = Depends(get_store),
 ) -> TaskStartResponse:
-    task = await orchestrator.run(request.request)
-    store.save(task)
+    missing_keys = settings.missing_provider_keys()
+    if missing_keys:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "message": "Real provider mode is enabled, but required provider keys are missing.",
+                "missing": missing_keys,
+                "resolution": "Set USE_MOCK_AGENTS=true for local development or configure the missing keys.",
+            },
+        )
+
+    try:
+        task = await orchestrator.run(request.request)
+        store.save(task)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "message": "Task failed during orchestration.",
+                "error_type": exc.__class__.__name__,
+            },
+        ) from exc
+
     return TaskStartResponse(task_id=task.task_id, status=task.status)
 
 
